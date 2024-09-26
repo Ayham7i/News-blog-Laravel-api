@@ -7,79 +7,69 @@ use Illuminate\Http\Request;
 
 class AuthorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    // List all authors
     public function index()
     {
-        //
+        return response()->json(Author::all());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    // Show a specific author
+    public function show($id)
     {
-        //
+        $author = Author::find($id);
+        if ($author) {
+            return response()->json($author);
+        }
+        return response()->json(['message' => 'Author not found'], 404);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+    // Create a new author
     public function store(Request $request)
     {
-        //
+        // Validation for both 'name' and 'email'
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:authors,email|max:255',  // Email must be valid and unique
+        ]);
+
+        // Create the new author with name and email
+        $author = Author::create([
+            'name' => $request->name,
+            'email' => $request->email,  // Save email
+        ]);
+
+        return response()->json($author, 201);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Author  $author
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Author $author)
+    // Update an existing author
+    public function update(Request $request, $id)
     {
-        //
+        $author = Author::find($id);
+        if (!$author) {
+            return response()->json(['message' => 'Author not found'], 404);
+        }
+
+        // Validation for both 'name' and 'email'
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:authors,email,' . $id . '|max:255',  // Ensure unique email except for this author
+        ]);
+
+        // Update the author with provided name and email (if present)
+        $author->update($request->only(['name', 'email']));
+
+        return response()->json($author);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Author  $author
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Author $author)
+    // Delete an author
+    public function destroy($id)
     {
-        //
-    }
+        $author = Author::find($id);
+        if (!$author) {
+            return response()->json(['message' => 'Author not found'], 404);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Author  $author
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Author $author)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Author  $author
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Author $author)
-    {
-        //
+        $author->delete();
+        return response()->json(['message' => 'Author deleted']);
     }
 }
