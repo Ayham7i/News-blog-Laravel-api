@@ -3,27 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Services\CategoryCacheProxy;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    // List all categories
-    public function index()
+    protected $categoryProxy;
+
+    public function __construct(CategoryCacheProxy $categoryProxy)
     {
-        return response()->json(Category::all());
+        $this->categoryProxy = $categoryProxy;
     }
 
-    // Show a specific category
+    // List all categories (using the cache proxy)
+    public function index()
+    {
+        // Fetch categories using the cache proxy
+        return response()->json($this->categoryProxy->getAllCategories());
+    }
+
+    // Show a specific category (using the cache proxy)
     public function show($id)
     {
-        $category = Category::find($id);
+        $category = $this->categoryProxy->getCategoryById($id);
         if ($category) {
             return response()->json($category);
         }
         return response()->json(['message' => 'Category not found'], 404);
     }
 
-    // Create a new category
+    // Create a new category and clear the cache
     public function store(Request $request)
     {
         $request->validate([
@@ -34,10 +43,13 @@ class CategoryController extends Controller
             'name' => $request->name,
         ]);
 
+        // Clear cache after creating a new category
+        $this->categoryProxy->clearCache();
+
         return response()->json($category, 201);
     }
 
-    // Update an existing category
+    // Update an existing category and clear the cache for this category
     public function update(Request $request, $id)
     {
         $category = Category::find($id);
@@ -50,10 +62,14 @@ class CategoryController extends Controller
         ]);
 
         $category->update($request->only(['name']));
+
+        // Clear cache for this category and the category list
+        $this->categoryProxy->clearCache($id);
+
         return response()->json($category);
     }
 
-    // Delete a category
+    // Delete a category and clear the cache
     public function destroy($id)
     {
         $category = Category::find($id);
@@ -62,6 +78,10 @@ class CategoryController extends Controller
         }
 
         $category->delete();
+
+        // Clear cache for this category and the category list
+        $this->categoryProxy->clearCache($id);
+
         return response()->json(['message' => 'Category deleted']);
     }
 }
