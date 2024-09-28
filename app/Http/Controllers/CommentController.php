@@ -3,27 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Services\CommentCacheProxy;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    // List all comments
-    public function index()
+    protected $commentProxy;
+
+    public function __construct(CommentCacheProxy $commentProxy)
     {
-        return response()->json(Comment::all());
+        $this->commentProxy = $commentProxy;
     }
 
-    // Show a specific comment
+    // List all comments (using the cache proxy)
+    public function index()
+    {
+        // Fetch comments using the cache proxy
+        return response()->json($this->commentProxy->getAllComments());
+    }
+
+    // Show a specific comment (using the cache proxy)
     public function show($id)
     {
-        $comment = Comment::find($id);
+        $comment = $this->commentProxy->getCommentById($id);
         if ($comment) {
             return response()->json($comment);
         }
         return response()->json(['message' => 'Comment not found'], 404);
     }
 
-    // Create a new comment
+    // Create a new comment and clear the cache
     public function store(Request $request)
     {
         $request->validate([
@@ -36,10 +45,13 @@ class CommentController extends Controller
             'article_id' => $request->article_id,
         ]);
 
+        // Clear cache after creating a new comment
+        $this->commentProxy->clearCache();
+
         return response()->json($comment, 201);
     }
 
-    // Update an existing comment
+    // Update an existing comment and clear the cache for this comment
     public function update(Request $request, $id)
     {
         $comment = Comment::find($id);
@@ -52,10 +64,14 @@ class CommentController extends Controller
         ]);
 
         $comment->update($request->only(['content']));
+
+        // Clear cache for this comment and the comment list
+        $this->commentProxy->clearCache($id);
+
         return response()->json($comment);
     }
 
-    // Delete a comment
+    // Delete a comment and clear the cache
     public function destroy($id)
     {
         $comment = Comment::find($id);
@@ -64,6 +80,10 @@ class CommentController extends Controller
         }
 
         $comment->delete();
+
+        // Clear cache for this comment and the comment list
+        $this->commentProxy->clearCache($id);
+
         return response()->json(['message' => 'Comment deleted']);
     }
 }
