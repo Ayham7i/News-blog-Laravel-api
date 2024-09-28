@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Article;
 
-class ArticleProxyService
+class ArticleCacheProxy
 {
     protected $cacheTTL = 60; // Cache Time To Live (TTL) in minutes
 
@@ -13,7 +13,7 @@ class ArticleProxyService
     public function getAllArticles()
     {
         return Cache::remember('articles', $this->cacheTTL, function () {
-            return Article::all();  // Fetch articles from database if not in cache
+            return Article::all();  // Fetch articles from database if not cached
         });
     }
 
@@ -21,11 +21,11 @@ class ArticleProxyService
     public function getArticleById($id)
     {
         return Cache::remember("article_{$id}", $this->cacheTTL, function () use ($id) {
-            return Article::findOrFail($id);  // Fetch from database if not in cache
+            return Article::find($id);  // Fetch from database if not cached
         });
     }
 
-    // Invalidate the cache when an article is updated or deleted
+    // Invalidate cache when an article is created, updated, or deleted
     public function clearCache($id = null)
     {
         if ($id) {
