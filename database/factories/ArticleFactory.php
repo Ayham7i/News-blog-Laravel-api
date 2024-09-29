@@ -16,8 +16,8 @@ class ArticleFactory extends Factory
         return [
             'title' => $this->faker->sentence,
             'content' => $this->faker->paragraph,
-            'author_id' => Author::factory(),  // Generate a new author
-            'category_id' => Category::factory(),  // Generate a new category
+            'author_id' => Author::factory(),
+            'category_id' => Category::factory(),  
         ];
     }
 }
