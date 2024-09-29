@@ -7,21 +7,19 @@ use App\Models\Article;
 
 class ArticleCacheProxy
 {
-    protected $cacheTTL = 60; // Cache Time To Live (TTL) in minutes
+    protected $cacheTTL = 60;
 
-    // Retrieve all articles, either from cache or from the database
     public function getAllArticles()
     {
         return Cache::remember('articles', $this->cacheTTL, function () {
-            return Article::all();  // Fetch articles from database if not cached
+            return Article::all();
         });
     }
 
-    // Retrieve a single article by ID, either from cache or from the database
     public function getArticleById($id)
     {
         return Cache::remember("article_{$id}", $this->cacheTTL, function () use ($id) {
-            return Article::find($id);  // Fetch from database if not cached
+            return Article::find($id);
         });
     }
 
@@ -29,8 +27,8 @@ class ArticleCacheProxy
     public function clearCache($id = null)
     {
         if ($id) {
-            Cache::forget("article_{$id}");  // Clear specific article cache
+            Cache::forget("article_{$id}");  
         }
-        Cache::forget('articles');  // Clear all articles cache
+        Cache::forget('articles');
     }
 }

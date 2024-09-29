@@ -15,14 +15,11 @@ class ArticleController extends Controller
         $this->articleProxy = $articleProxy;
     }
 
-    // List all articles (using the cache proxy)
     public function index()
     {
-        // Fetch articles using the cache proxy
         return response()->json($this->articleProxy->getAllArticles());
     }
 
-    // Show a specific article (using the cache proxy)
     public function show($id)
     {
         $article = $this->articleProxy->getArticleById($id);
@@ -32,7 +29,6 @@ class ArticleController extends Controller
         return response()->json(['message' => 'Article not found'], 404);
     }
 
-    // Create a new article and clear the cache
     public function store(Request $request)
     {
         $request->validate([
@@ -49,13 +45,11 @@ class ArticleController extends Controller
             'category_id' => $request->category_id,
         ]);
 
-        // Clear cache after creating a new article
         $this->articleProxy->clearCache();
 
         return response()->json($article, 201);
     }
 
-    // Update an existing article and clear the cache for this article
     public function update(Request $request, $id)
     {
         $article = Article::find($id);
@@ -72,13 +66,11 @@ class ArticleController extends Controller
 
         $article->update($request->only(['title', 'content', 'author_id', 'category_id']));
 
-        // Clear cache for this article and the article list
         $this->articleProxy->clearCache($id);
 
         return response()->json($article);
     }
 
-    // Delete an article and clear the cache
     public function destroy($id)
     {
         $article = Article::find($id);
@@ -88,7 +80,6 @@ class ArticleController extends Controller
 
         $article->delete();
 
-        // Clear cache for this article and the article list
         $this->articleProxy->clearCache($id);
 
         return response()->json(['message' => 'Article deleted']);

@@ -7,30 +7,27 @@ use App\Models\Category;
 
 class CategoryCacheProxy
 {
-    protected $cacheTTL = 60; // Cache Time To Live (TTL) in minutes
+    protected $cacheTTL = 60;
 
-    // Retrieve all categories, either from cache or from the database
     public function getAllCategories()
     {
         return Cache::remember('categories', $this->cacheTTL, function () {
-            return Category::all();  // Fetch categories from the database if not in cache
+            return Category::all();
         });
     }
 
-    // Retrieve a single category by ID, either from cache or from the database
     public function getCategoryById($id)
     {
         return Cache::remember("category_{$id}", $this->cacheTTL, function () use ($id) {
-            return Category::find($id);  // Fetch from the database if not in cache
+            return Category::find($id);
         });
     }
 
-    // Invalidate cache when a category is created, updated, or deleted
     public function clearCache($id = null)
     {
         if ($id) {
-            Cache::forget("category_{$id}");  // Clear specific category cache
+            Cache::forget("category_{$id}");
         }
-        Cache::forget('categories');  // Clear all categories cache
+        Cache::forget('categories'); 
     }
 }
